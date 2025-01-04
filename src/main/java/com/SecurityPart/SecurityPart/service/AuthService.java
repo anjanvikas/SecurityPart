@@ -5,6 +5,12 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import com.SecurityPart.SecurityPart.exceptions.RoleNotFoundException;
@@ -13,6 +19,7 @@ import com.SecurityPart.SecurityPart.model.Role;
 import com.SecurityPart.SecurityPart.model.User;
 import com.SecurityPart.SecurityPart.repository.RoleRepo;
 import com.SecurityPart.SecurityPart.repository.UserRepo;
+import com.SecurityPart.SecurityPart.security.jwt.JwtUtils;
 
 
 
@@ -20,10 +27,19 @@ import com.SecurityPart.SecurityPart.repository.UserRepo;
 public class AuthService {
 
     @Autowired
-    UserRepo userRepo;
+    private JwtUtils jwtUtils;
 
     @Autowired
-    RoleRepo roleRepo;
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserRepo userRepo;
+
+    @Autowired
+    private RoleRepo roleRepo;
+
+    @Autowired
+    private PasswordEncoder encoder;
 
     public boolean userExistsByUsername(String userName) {
 
@@ -36,10 +52,11 @@ public class AuthService {
 
     }
 
-    public User registerUser(String userName, String email, String passWord, Set<String> strRoles) {
-        System.out.println(strRoles);
+    public User registerUser(String userName, String email, String passWord, Set<String> strRoles) throws Exception{
+        System.out.println(userName + " " + email + " " + passWord);
         Set<Role> roles = new HashSet<>();
         try{
+            User user = new User(userName,encoder.encode(passWord),email);
             if (strRoles == null) {
                 Role userRole = roleRepo.findByName(ERole.ROLE_USER)
                                 .orElseThrow(() -> new RoleNotFoundException("Error: Role is not found."));
@@ -60,7 +77,6 @@ public class AuthService {
                     }
                     });
                 }
-            User user = new User(userName,passWord,email);
             
             user.setRoles(roles);
             userRepo.save(user);
@@ -70,6 +86,22 @@ public class AuthService {
         } catch(Exception e){
             throw new RuntimeException("Error: User registration failed. Please try again later.", e);
         }
+
+    }
+
+    public String loginUser(String userNameorEmail, String passWord) throws Exception{
+
+         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userNameorEmail, passWord));
+         
+         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+         UserDetailsImple userDetails = (UserDetailsImple)authentication.getPrincipal();
+
+         ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+
+         
+         
+         return jwtCookie.toString();
 
     }
     

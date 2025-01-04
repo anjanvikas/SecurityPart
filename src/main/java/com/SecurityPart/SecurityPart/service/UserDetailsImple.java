@@ -13,9 +13,11 @@ import com.SecurityPart.SecurityPart.model.User;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @Data
+@NoArgsConstructor
 public class UserDetailsImple implements UserDetails{
     
     private Long Id;
@@ -35,20 +37,20 @@ public class UserDetailsImple implements UserDetails{
 
         return new UserDetailsImple(
                             user.getId(), 
-                            user.getUserName(), 
-                            user.getEmail(),
+                            user.getUserName(),
                             user.getPassWord(), 
+                            user.getEmail(),
                             authorities);
   }
 
     @Override
     public String getPassword() {
-        return this.userName;
+        return this.passWord;
     }
 
     @Override
     public String getUsername() {
-        return this.passWord;
+        return this.userName;
     }
 
     @Override
