@@ -1,6 +1,7 @@
 package com.SecurityPart.SecurityPart.service;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,7 +30,7 @@ public class UserDetailsServiceImple implements UserDetailsService{
         if(user.isEmpty()){
             throw new UsernameOrEmailNotFoundException("Not Found "+ usernameOrEmail);
         }
-
+        System.out.println("User Found: " + user.get().getUserName());
         return UserDetailsImple.build(user.get());
     }
 

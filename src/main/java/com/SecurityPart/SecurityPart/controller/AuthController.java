@@ -65,7 +65,9 @@ public class AuthController {
         try{
 
             String cookie = authService.loginUser(loginDto.getUserNameorEmail(),loginDto.getPassWord());
-            return ResponseEntity.ok(cookie);
+            return ResponseEntity.ok()
+                                 .header("Set-Cookie", cookie)
+                                 .body("Login Successful!");
 
         } catch(BadCredentialsException e){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
