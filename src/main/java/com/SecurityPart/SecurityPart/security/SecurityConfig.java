@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.SecurityPart.SecurityPart.security.jwt.AuthEntryPointJwt;
 import com.SecurityPart.SecurityPart.security.jwt.JwtAuthFilter;
 import com.SecurityPart.SecurityPart.service.UserDetailsServiceImple;
 
@@ -24,6 +25,9 @@ public class SecurityConfig {
 
     @Autowired
     private UserDetailsServiceImple userDetailsService;
+
+    @Autowired
+    private AuthEntryPointJwt handler;
 
     @Bean
     public JwtAuthFilter jwtAuthFilter(){
@@ -57,6 +61,7 @@ public class SecurityConfig {
                                                         .requestMatchers("/auth/login","/auth/register","/oauth2/**")
                                                         .permitAll()
                                                         .anyRequest().authenticated())
+                    .exceptionHandling(exception -> exception.authenticationEntryPoint(handler))
                     // .oauth2Login(Customizer.withDefaults())
                     .httpBasic(Customizer.withDefaults())
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
