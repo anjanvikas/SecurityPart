@@ -9,9 +9,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.SecurityPart.SecurityPart.dto.LoginRequest;
 import com.SecurityPart.SecurityPart.dto.SignupRequest;
@@ -28,8 +30,8 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-
-    @PostMapping("/register")
+    
+    @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupDto){
 
         if(authService.userExistsByUsername(signupDto.getUserName())){
@@ -53,7 +55,7 @@ public class AuthController {
                     
     }
 
-    @PostMapping("/login")
+    @PostMapping("/signin")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest loginDto){
 
         if(!(authService.userExistsByEmail(loginDto.getUserNameorEmail()) || authService.userExistsByUsername(loginDto.getUserNameorEmail()))){
@@ -77,4 +79,15 @@ public class AuthController {
                                 .body("Error : Unable to login the user. Please try again later" + e.getMessage());
         }
     }
+
+    @PostMapping("/signout")
+    public ResponseEntity<?> logoutUser(){
+        String cookie = authService.logoutUser();
+        return ResponseEntity.ok()
+                            .header("Set-Cookie", cookie)
+                            .body("Logged out successfully");
+    }
+
+
+
 }

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.WebUtils;
 
@@ -45,8 +46,19 @@ public class JwtUtils {
           }
     }
 
-    public ResponseCookie generateJwtCookie(UserDetailsImple userPrincipal){
-        String jwt = generateJwtTokenFromUserName(userPrincipal.getUsername());
+    public ResponseCookie generateJwtCookie(Object principal){
+
+        String userName;
+
+        if(principal instanceof UserDetailsImple){
+          userName = ((UserDetailsImple)principal).getUsername();
+        } else if(principal instanceof OAuth2User){
+          userName = ((OAuth2User)principal).getName();
+        } else{
+          throw new IllegalArgumentException("Unsupported user type");
+        }
+
+        String jwt = generateJwtTokenFromUserName(userName);
         ResponseCookie cookie = ResponseCookie
                                             .from(jwtCookieName, jwt)
                                             .path("/api")
@@ -55,6 +67,7 @@ public class JwtUtils {
                                             .build();
         return cookie;
     }
+
     
     public ResponseCookie getCleanJwtCookie() {
         ResponseCookie cookie = ResponseCookie

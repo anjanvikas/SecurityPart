@@ -104,5 +104,9 @@ public class AuthService {
          return jwtCookie.toString();
 
     }
+
+    public String logoutUser() {
+        return jwtUtils.getCleanJwtCookie().toString();
+    }
     
 }

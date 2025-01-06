@@ -46,6 +46,11 @@ public class User {
     @Email
     private String email;
 
+
+    private String googleId;
+
+    private String profilePicture;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles", 
              joinColumns = @JoinColumn(name = "user_id"),

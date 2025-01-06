@@ -2,6 +2,8 @@ package com.SecurityPart.SecurityPart.security;
 
 import java.net.http.HttpRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,21 +15,42 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+
 import com.SecurityPart.SecurityPart.security.jwt.AuthEntryPointJwt;
 import com.SecurityPart.SecurityPart.security.jwt.JwtAuthFilter;
+import com.SecurityPart.SecurityPart.security.jwt.JwtUtils;
+import com.SecurityPart.SecurityPart.security.oauth2.CustomOAuth2LoginSuccessHandler;
+import com.SecurityPart.SecurityPart.security.oauth2.CustomOAuth2UserService;
 import com.SecurityPart.SecurityPart.service.UserDetailsServiceImple;
 
 @Configuration
 public class SecurityConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Autowired
     private UserDetailsServiceImple userDetailsService;
 
     @Autowired
     private AuthEntryPointJwt handler;
+
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService;
+
+    @Autowired
+    private ClientRegistrationRepository clientRegistrationRepository;
+
+    @Autowired
+    private OAuth2AuthorizedClientRepository authorizedClientRepository;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
 
     @Bean
     public JwtAuthFilter jwtAuthFilter(){
@@ -38,6 +61,7 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception{
         return authConfig.getAuthenticationManager();
     }
+
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider(){
@@ -55,15 +79,19 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+        logger.info("CustomOAuth2UserService: {}", customOAuth2UserService);
         return http
                     .csrf(csrf -> csrf.disable())
                     .authorizeHttpRequests(authorize -> authorize
-                                                        .requestMatchers("/auth/login","/auth/register","/oauth2/**")
+                                                        .requestMatchers("/auth/**","/oauth2/**")
                                                         .permitAll()
                                                         .anyRequest().authenticated())
-                    .exceptionHandling(exception -> exception.authenticationEntryPoint(handler))
-                    // .oauth2Login(Customizer.withDefaults())
+                    
+                    .oauth2Login(oauth2 -> oauth2
+                                                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                                                .successHandler(new CustomOAuth2LoginSuccessHandler(jwtUtils)))
                     .httpBasic(Customizer.withDefaults())
+                    .exceptionHandling(exception -> exception.authenticationEntryPoint(handler))
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .authenticationProvider(authenticationProvider())
                     .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class)
